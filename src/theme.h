@@ -11,7 +11,7 @@ enum class ThemeMode
 // Undocumented Windows messages for menu bar painting.
 // Part of UAH (User32 Aero Hooks), present since Vista.
 // Struct layouts reverse-engineered by the community.
-// See: https://gist.github.com/adzm/920e3dec1f013254e36ef8da36e28e9d
+// See: https://github.com/adzm/win32-custom-menubar-aero-theme
 #define WM_UAHDRAWMENU 0x0091
 #define WM_UAHDRAWMENUITEM 0x0092
 

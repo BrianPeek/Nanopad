@@ -73,7 +73,12 @@ bool Printer::Print(HWND hwndOwner, const std::wstring &text, const std::wstring
     {
         LOGFONTW lf;
         GetObjectW(hFont, sizeof(lf), &lf);
-        lf.lfHeight = MulDiv(lf.lfHeight, dpiY, 96);
+        // Scale font from screen DPI to printer DPI
+        HDC hScreenDC = GetDC(nullptr);
+        int screenDpi = hScreenDC ? GetDeviceCaps(hScreenDC, LOGPIXELSY) : 96;
+        if(hScreenDC)
+            ReleaseDC(nullptr, hScreenDC);
+        lf.lfHeight = MulDiv(lf.lfHeight, dpiY, screenDpi);
         hPrintFont  = CreateFontIndirectW(&lf);
     }
 

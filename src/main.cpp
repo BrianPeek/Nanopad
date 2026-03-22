@@ -101,11 +101,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
     wc.hIconSm       = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_NANOPAD));
     RegisterClassExW(&wc);
 
-    // Default window position
-    int x = CW_USEDEFAULT, y = CW_USEDEFAULT, cx = 1200, cy = 850;
-
-    g_hwndMain = CreateWindowExW(WS_EX_ACCEPTFILES, WINDOW_CLASS, APP_NAME, WS_OVERLAPPEDWINDOW, x, y, cx, cy, nullptr,
-                                 nullptr, hInstance, nullptr);
+    g_hwndMain = CreateWindowExW(WS_EX_ACCEPTFILES, WINDOW_CLASS, APP_NAME, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
+                                 CW_USEDEFAULT, 1200, 850, nullptr, nullptr, hInstance, nullptr);
 
     if(!g_hwndMain)
         return 1;
@@ -349,30 +346,33 @@ void SaveWindowPlacement(HWND hwnd)
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    // WM_FINDREPLACE is registered at runtime — can't be a switch case
     static UINT WM_FINDREPLACE = FindReplace::GetFindMessageId();
     if(msg == WM_FINDREPLACE)
     {
         g_findReplace.HandleFindMessage(lParam);
         return 0;
     }
-    if(msg == UpdateChecker::WM_APP_UPDATE_AVAILABLE)
-    {
-        UpdateChecker::ShowUpdateDialog(hwnd);
-        return 0;
-    }
-    if(msg == WM_UAHDRAWMENU)
-    {
-        if(g_theme.HandleUahDrawMenu(hwnd, lParam))
-            return TRUE;
-    }
-    if(msg == WM_UAHDRAWMENUITEM)
-    {
-        if(g_theme.HandleUahDrawMenuItem(hwnd, lParam))
-            return TRUE;
-    }
 
     switch(msg)
     {
+        case WM_UAHDRAWMENU:
+        {
+            if(g_theme.HandleUahDrawMenu(hwnd, lParam))
+                return TRUE;
+            break;
+        }
+        case WM_UAHDRAWMENUITEM:
+        {
+            if(g_theme.HandleUahDrawMenuItem(hwnd, lParam))
+                return TRUE;
+            break;
+        }
+        case UpdateChecker::WM_APP_UPDATE_AVAILABLE:
+        {
+            UpdateChecker::ShowUpdateDialog(hwnd);
+            return 0;
+        }
         case WM_CREATE:
         {
             // Capture initial DPI for the window's monitor

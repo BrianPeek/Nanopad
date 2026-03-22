@@ -28,6 +28,7 @@ A simple, portable Win32 text editor in the spirit of classic Windows Notepad.
 - **Command line** — `nanopad.exe <file>` opens a file; prompts to create if it doesn't exist
 - **Replace Notepad** — Redirect all `notepad.exe` launches to Nanopad (Help menu, reversible)
 - **Open With integration** — Register in the Windows "Open With" menu for common text file extensions (no admin required)
+- **Explorer context menu** — Add "Edit with Nanopad" to the right-click menu for all files
 - **Auto-update check** — Background check against GitHub Releases on startup; notified via About dialog
 - **Portable** — All settings in `nanopad.ini` next to the exe; no registry writes for app settings
 
@@ -47,7 +48,7 @@ Output: `bin\Release\nanopad.exe`
 
 ### CI/CD
 
-- **Push/PR to main** — Builds Debug + Release automatically via GitHub Actions
+- **Push/PR to master** — Builds Debug + Release automatically via GitHub Actions
 - **Tag a release** — `git tag v1.0.0 && git push --tags` triggers a release build that creates a GitHub Release with a zip containing the exe, README, and SHA256 checksum
 - Version is stamped automatically from the git tag into `version.h` — no manual version bumps needed
 
@@ -87,6 +88,9 @@ Stored in `nanopad.ini` next to the executable (portable — no registry writes)
 
 ### Add to Open With
 **Help → Add to Open With** registers Nanopad in the Windows right-click "Open with" menu for common text file extensions (`.inf`, `.ini`, `.log`, `.ps1`, `.psd1`, `.psm1`, `.scp`, `.txt`, `.wtx`). Uses HKCU — no admin required. Toggle off to unregister.
+
+### Explorer Context Menu
+**Help → Windows Integration → Add "Edit with Nanopad" to Explorer** adds a right-click context menu entry for all file types. Uses HKCU — no admin required. On Windows 11, appears in "Show more options". Toggle off to unregister.
 
 ### Replace Notepad
 **Help → Replace Notepad** redirects all `notepad.exe` launches system-wide to Nanopad via Image File Execution Options. Requires administrator privileges (UAC prompt). The original IFEO state is saved to `nanopad.ini` and can be fully restored by unchecking the option.

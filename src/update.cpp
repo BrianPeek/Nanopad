@@ -12,7 +12,6 @@ static constexpr const wchar_t *RELEASES_URL    = L"https://github.com/BrianPeek
 
 static constexpr const wchar_t *ABOUT_TEXT = L"Nanopad %s\n\n"
                                              L"A simple text editor in the spirit of classic Notepad.\n"
-                                             L"Developed with the assistance of AI tooling.\n\n"
                                              L"%s";
 
 wchar_t UpdateChecker::s_newVersion[64]  = {};

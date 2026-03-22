@@ -11,7 +11,9 @@ static constexpr const wchar_t *GITHUB_API_PATH = L"/repos/BrianPeek/Nanopad/rel
 static constexpr const wchar_t *RELEASES_URL    = L"https://github.com/BrianPeek/Nanopad/releases/latest";
 
 static constexpr const wchar_t *ABOUT_TEXT = L"Nanopad %s\n\n"
-                                             L"A simple text editor in the spirit of classic Notepad.\n"
+                                             L"A simple text editor in the spirit of classic Notepad.\n\n"
+                                             L"\xA9 2026 Brian Peek\n"
+                                             L"github.com/BrianPeek/Nanopad\n\n"
                                              L"%s";
 
 wchar_t UpdateChecker::s_newVersion[64]  = {};

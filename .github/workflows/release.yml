@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Extract version from tag
+      id: version
+      shell: pwsh
+      run: |
+        $version = "${{ github.ref_name }}".TrimStart('v')
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "TAG=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
+
+    - name: Inject version into source
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.VERSION }}"
+        $parts = $version.Split('.')
+        $major = $parts[0]; $minor = if ($parts.Length -gt 1) { $parts[1] } else { "0" }; $patch = if ($parts.Length -gt 2) { $parts[2] } else { "0" }
+
+        # Stamp version.h — the single source of truth
+        $file = "src\version.h"
+        $content = Get-Content $file -Raw
+        $content = $content -replace 'SN_VERSION_MAJOR\s+\d+', "SN_VERSION_MAJOR  $major"
+        $content = $content -replace 'SN_VERSION_MINOR\s+\d+', "SN_VERSION_MINOR  $minor"
+        $content = $content -replace 'SN_VERSION_PATCH\s+\d+', "SN_VERSION_PATCH  $patch"
+        $content = $content -replace 'SN_VERSION_STR\s+"[^"]*"', "SN_VERSION_STR    `"$version`""
+        $content = $content -replace 'SN_VERSION_WSTR\s+L"[^"]*"', "SN_VERSION_WSTR   L`"$version`""
+        Set-Content $file $content
+
+        Write-Host "Stamped version.h: $version ($major.$minor.$patch)"
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build Release
+      run: msbuild Nanopad.sln /p:Configuration=Release /p:Platform=x64 /nologo /v:minimal
+
+    - name: Create distribution
+      shell: pwsh
+      run: |
+        $distDir = "Nanopad-${{ steps.version.outputs.VERSION }}"
+        New-Item -ItemType Directory -Path $distDir | Out-Null
+        Copy-Item "bin\Release\nanopad.exe" $distDir\
+        Copy-Item "README.md" $distDir\
+        Copy-Item "LICENSE" $distDir\
+
+        # Generate SHA256 checksum
+        $hash = (Get-FileHash "$distDir\nanopad.exe" -Algorithm SHA256).Hash
+        "$hash  nanopad.exe" | Out-File -Encoding ASCII "$distDir\SHA256SUMS.txt"
+
+        # Create zip
+        Compress-Archive -Path "$distDir\*" -DestinationPath "$distDir.zip"
+
+        # Output for next steps
+        echo "DIST_ZIP=$distDir.zip" >> $env:GITHUB_OUTPUT
+        echo "HASH=$hash" >> $env:GITHUB_OUTPUT
+      id: dist
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ${{ steps.dist.outputs.DIST_ZIP }}
+        generate_release_notes: true
+        body: |
+          ## Nanopad ${{ steps.version.outputs.VERSION }}
+
+          ### Download
+          Extract the zip and run `nanopad.exe`. Settings are stored in `nanopad.ini` next to the executable.
+
+          ### SHA256
+          ```
+          ${{ steps.dist.outputs.HASH }}  nanopad.exe
+          ```

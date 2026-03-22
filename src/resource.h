@@ -1,0 +1,53 @@
+#pragma once
+
+// Icons
+#define IDI_NANOPAD 101
+
+// Menus & Accelerators
+#define IDR_MAINMENU 102
+#define IDR_ACCELERATOR 103
+
+// Controls
+#define IDC_EDIT 1001
+#define IDC_STATUSBAR 1002
+
+// File menu
+#define IDM_FILE_NEW 40001
+#define IDM_FILE_OPEN 40002
+#define IDM_FILE_SAVE 40003
+#define IDM_FILE_SAVEAS 40004
+#define IDM_FILE_PRINT 40005
+#define IDM_FILE_EXIT 40006
+
+// Edit menu
+#define IDM_EDIT_UNDO 40010
+#define IDM_EDIT_CUT 40011
+#define IDM_EDIT_COPY 40012
+#define IDM_EDIT_PASTE 40013
+#define IDM_EDIT_DELETE 40014
+#define IDM_EDIT_SELECTALL 40015
+#define IDM_EDIT_FIND 40016
+#define IDM_EDIT_REPLACE 40017
+#define IDM_EDIT_GOTO 40018
+#define IDM_EDIT_FINDNEXT 40019
+#define IDM_EDIT_FINDPREV 40020
+
+// Format menu
+#define IDM_FORMAT_WORDWRAP 40030
+#define IDM_FORMAT_FONT 40031
+
+// View menu
+#define IDM_VIEW_STATUSBAR 40040
+#define IDM_VIEW_DARK 40041
+#define IDM_VIEW_LIGHT 40042
+#define IDM_VIEW_SYSTEM 40043
+
+// Help menu
+#define IDM_HELP_ABOUT 40050
+#define IDM_HELP_REPLACE 40051
+#define IDM_HELP_OPENWITH 40052
+#define IDM_HELP_CTXMENU 40054
+
+// Dialogs
+#define IDD_GOTO 200
+#define IDC_GOTO_LINE 201

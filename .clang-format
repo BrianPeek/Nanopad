@@ -1,0 +1,11 @@
+BasedOnStyle: Microsoft
+BreakBeforeBraces: Allman
+IndentCaseLabels: true
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+SortIncludes: Never
+AlignConsecutiveAssignments: Consecutive
+SpaceBeforeParens: Never

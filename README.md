@@ -9,6 +9,8 @@ A simple, portable Win32 text editor in the spirit of classic Windows Notepad.
 
 *Developed with the assistance of AI tooling.*
 
+Read more about my experiences with AI and this project on [my blog](https://brianpeek.com/ai-types-faster-than-i-do/).
+
 ![Dark mode](media/dark.png)
 ![Light mode](media/light.png)
 

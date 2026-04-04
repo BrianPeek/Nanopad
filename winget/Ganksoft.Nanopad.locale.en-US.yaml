@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.12.0.schema.json
 
 PackageIdentifier: Ganksoft.Nanopad
 PackageVersion: 1.0.3
@@ -28,4 +28,4 @@ Tags:
   - cpp
 ReleaseNotesUrl: https://github.com/BrianPeek/Nanopad/releases/tag/v1.0.3
 ManifestType: defaultLocale
-ManifestVersion: 1.6.0
+ManifestVersion: 1.12.0

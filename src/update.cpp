@@ -12,7 +12,7 @@ static constexpr const wchar_t *RELEASES_URL    = L"https://github.com/BrianPeek
 
 static constexpr const wchar_t *ABOUT_TEXT = L"Nanopad %s\n\n"
                                              L"A simple text editor in the spirit of classic Notepad.\n\n"
-                                             L"\xA9 2026 Brian Peek\n"
+                                             SN_COPYRIGHT L"\n"
                                              L"github.com/BrianPeek/Nanopad\n\n"
                                              L"%s";
 
@@ -22,7 +22,10 @@ bool UpdateChecker::s_updateAvailable    = false;
 
 void UpdateChecker::CheckAsync(HWND hwnd)
 {
-    // Fire and forget — thread handle not needed
+    // Skip update check for dev builds (version contains "-dev")
+    if(wcsstr(SN_VERSION_WSTR, L"-dev"))
+        return;
+
     HANDLE hThread = CreateThread(nullptr, 0, CheckThread, (LPVOID)hwnd, 0, nullptr);
     if(hThread)
         CloseHandle(hThread);

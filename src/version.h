@@ -10,4 +10,4 @@
 
 #define SN_APP_NAME L"Nanopad"
 #define SN_APP_DESC L"Nanopad Text Editor"
-#define SN_COPYRIGHT L"\xA9 2026 Brian Peek"
+#define SN_COPYRIGHT L"\xA9 2026 Ganksoft LLC"

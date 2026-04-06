@@ -159,14 +159,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 void UpdateTitle()
 {
     wchar_t title[MAX_PATH + 32];
-    wchar_t *p = title;
+    wchar_t *p         = title;
+    const wchar_t *end = title + _countof(title);
 
     if(g_editor.IsDirty())
         *p++ = L'*';
 
     if(g_fileInfo.filePath.empty())
     {
-        wcscpy_s(p, MAX_PATH, L"Untitled");
+        wcscpy_s(p, end - p, L"Untitled");
         p += 8;
     }
     else
@@ -178,13 +179,15 @@ void UpdateTitle()
             if(filePath[i] == L'\\' || filePath[i] == L'/')
                 name = filePath + i + 1;
         size_t nameLen = wcslen(name);
+        if(nameLen > (size_t)(end - p - 20))
+            nameLen = (size_t)(end - p - 20);
         wmemcpy(p, name, nameLen);
         p += nameLen;
     }
 
-    wcscpy_s(p, 16, L" - ");
+    wcscpy_s(p, end - p, L" - ");
     p += 3;
-    wcscpy_s(p, 16, APP_NAME);
+    wcscpy_s(p, end - p, APP_NAME);
     SetWindowTextW(g_hwndMain, title);
 }
 

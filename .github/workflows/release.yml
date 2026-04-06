@@ -57,16 +57,18 @@ jobs:
         Copy-Item "README.md" $distDir\
         Copy-Item "LICENSE" $distDir\
 
-        # Generate SHA256 checksum
-        $hash = (Get-FileHash "$distDir\nanopad.exe" -Algorithm SHA256).Hash
-        "$hash  nanopad.exe" | Out-File -Encoding ASCII "$distDir\SHA256SUMS.txt"
+        # Generate SHA256 checksums
+        $exeHash = (Get-FileHash "$distDir\nanopad.exe" -Algorithm SHA256).Hash
+        "$exeHash  nanopad.exe" | Out-File -Encoding ASCII "$distDir\SHA256SUMS.txt"
 
         # Create zip
         Compress-Archive -Path "$distDir\*" -DestinationPath "$distDir.zip"
+        $zipHash = (Get-FileHash "$distDir.zip" -Algorithm SHA256).Hash
 
         # Output for next steps
         echo "DIST_ZIP=$distDir.zip" >> $env:GITHUB_OUTPUT
-        echo "HASH=$hash" >> $env:GITHUB_OUTPUT
+        echo "EXE_HASH=$exeHash" >> $env:GITHUB_OUTPUT
+        echo "ZIP_HASH=$zipHash" >> $env:GITHUB_OUTPUT
       id: dist
 
     - name: Create GitHub Release
@@ -80,7 +82,21 @@ jobs:
           ### Download
           Extract the zip and run `nanopad.exe`. Settings are stored in `nanopad.ini` next to the executable.
 
+          ### Install via winget
+          ```
+          winget install Ganksoft.Nanopad
+          ```
+
           ### SHA256
           ```
-          ${{ steps.dist.outputs.HASH }}  nanopad.exe
+          ${{ steps.dist.outputs.EXE_HASH }}  nanopad.exe
+          ${{ steps.dist.outputs.ZIP_HASH }}  Nanopad-${{ steps.version.outputs.VERSION }}.zip
           ```
+
+    - name: Publish to winget
+      uses: vedantmgoyal9/winget-releaser@v2
+      with:
+        identifier: Ganksoft.Nanopad
+        version: ${{ steps.version.outputs.VERSION }}
+        installers-regex: '\.zip$'
+        token: ${{ secrets.WINGET_TOKEN }}

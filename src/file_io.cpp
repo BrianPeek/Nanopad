@@ -196,7 +196,7 @@ bool FileIO::ReadFile(const std::wstring &path, std::wstring &outText, FileInfo 
     {
         smallBuffer = std::make_unique<uint8_t[]>(size);
         DWORD bytesRead;
-        if(!::ReadFile(hFile, smallBuffer.get(), (DWORD)size, &bytesRead, nullptr))
+        if(!::ReadFile(hFile, smallBuffer.get(), (DWORD)size, &bytesRead, nullptr) || bytesRead != (DWORD)size)
         {
             CloseHandle(hFile);
             return false;

@@ -2,6 +2,8 @@
 #include "msgbox.h"
 #include <string>
 
+static constexpr int MAX_LINE_BUF = 1024;
+
 FindReplace::FindReplace() = default;
 
 void FindReplace::Initialize(HWND parent, HWND editor)
@@ -26,15 +28,15 @@ void FindReplace::PreFillFromSelection()
     int line      = (int)SendMessage(m_hwndEditor, EM_LINEFROMCHAR, selStart, 0);
     int lineStart = (int)SendMessage(m_hwndEditor, EM_LINEINDEX, line, 0);
     int lineLen   = (int)SendMessage(m_hwndEditor, EM_LINELENGTH, selStart, 0);
-    if(lineLen <= 0 || lineLen >= 1024)
+    if(lineLen <= 0 || lineLen >= MAX_LINE_BUF)
         return;
 
-    wchar_t lineBuf[1024];
+    wchar_t lineBuf[MAX_LINE_BUF];
     // EM_GETLINE requires the first WORD to contain the buffer size.
     // It does NOT null-terminate the result.
     *(WORD *)lineBuf = (WORD)_countof(lineBuf);
     int got          = (int)SendMessage(m_hwndEditor, EM_GETLINE, line, (LPARAM)lineBuf);
-    if(got <= 0 || got >= 1024)
+    if(got <= 0 || got >= MAX_LINE_BUF)
         return;
     lineBuf[got] = L'\0';
 
@@ -197,14 +199,14 @@ void FindReplace::DoReplace()
         size_t findLen = wcslen(m_findBuf);
         bool matchCase = (m_fr.Flags & FR_MATCHCASE) != 0;
 
-        if(selLen == (int)findLen && selLen < 1024)
+        if(selLen == (int)findLen && selLen < MAX_LINE_BUF)
         {
             int line      = (int)SendMessage(m_hwndEditor, EM_LINEFROMCHAR, selStart, 0);
             int lineStart = (int)SendMessage(m_hwndEditor, EM_LINEINDEX, line, 0);
-            wchar_t lineBuf[1024];
+            wchar_t lineBuf[MAX_LINE_BUF];
             *(WORD *)lineBuf = (WORD)_countof(lineBuf);
             int got          = (int)SendMessage(m_hwndEditor, EM_GETLINE, line, (LPARAM)lineBuf);
-            if(got <= 0 || got >= 1024)
+            if(got <= 0 || got >= MAX_LINE_BUF)
             {
                 DoFind(true);
                 return;

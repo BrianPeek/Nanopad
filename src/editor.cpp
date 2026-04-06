@@ -169,7 +169,8 @@ static INT_PTR CALLBACK GoToDlgProc(HWND hdlg, UINT msg, WPARAM wParam, LPARAM l
                     if(line > 0)
                     {
                         Editor *editor = (Editor *)GetWindowLongPtr(hdlg, GWLP_USERDATA);
-                        editor->GoToLine(line);
+                        if(editor)
+                            editor->GoToLine(line);
                         EndDialog(hdlg, IDOK);
                     }
                     return TRUE;

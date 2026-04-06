@@ -10,11 +10,11 @@ static constexpr const wchar_t *GITHUB_API_HOST = L"api.github.com";
 static constexpr const wchar_t *GITHUB_API_PATH = L"/repos/BrianPeek/Nanopad/releases/latest";
 static constexpr const wchar_t *RELEASES_URL    = L"https://github.com/BrianPeek/Nanopad/releases/latest";
 
-static constexpr const wchar_t *ABOUT_TEXT = L"Nanopad %s\n\n"
-                                             L"A simple text editor in the spirit of classic Notepad.\n\n"
-                                             SN_COPYRIGHT L"\n"
-                                             L"github.com/BrianPeek/Nanopad\n\n"
-                                             L"%s";
+static constexpr const wchar_t *ABOUT_TEXT =
+    L"Nanopad %s\n\n"
+    L"A simple text editor in the spirit of classic Notepad.\n\n" SN_COPYRIGHT L"\n"
+    L"github.com/BrianPeek/Nanopad\n\n"
+    L"%s";
 
 wchar_t UpdateChecker::s_newVersion[64]  = {};
 wchar_t UpdateChecker::s_releaseUrl[512] = {};
@@ -207,7 +207,8 @@ void UpdateChecker::ShowUpdateDialog(HWND hwnd)
                L"A new version of Nanopad is available!\n\n"
                L"Current version: %s\n"
                L"New version: %s\n\n"
-               L"Would you like to open the download page?",
+               L"Update with:  winget upgrade Ganksoft.Nanopad\n\n"
+               L"Or open the download page?",
                SN_VERSION_WSTR, s_newVersion);
 
     int result = CenteredMessageBox(hwnd, msg, L"Update Available", MB_YESNO | MB_ICONINFORMATION);
@@ -221,8 +222,11 @@ void UpdateChecker::ShowAboutDialog(HWND hwnd)
 
     if(s_updateAvailable)
     {
-        wchar_t updateLine[128];
-        swprintf_s(updateLine, L"\x2605 Version %s is available!\n\nWould you like to open the download page?",
+        wchar_t updateLine[256];
+        swprintf_s(updateLine,
+                   L"\x2605 Version %s is available!\n\n"
+                   L"Update with:  winget upgrade Ganksoft.Nanopad\n\n"
+                   L"Or open the download page?",
                    s_newVersion);
         swprintf_s(msg, ABOUT_TEXT, SN_VERSION_WSTR, updateLine);
 

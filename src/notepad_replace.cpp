@@ -265,43 +265,87 @@ bool NotepadReplace::Restore(HWND hwndOwner, Settings &settings)
 
 void NotepadReplace::StripNotepadFromCmdLine(std::wstring &cmdLine)
 {
-    // When launched via IFEO Debugger, the command line is:
-    //   "C:\path\to\nanopad.exe" C:\Windows\notepad.exe somefile.txt
-    // or:
-    //   "C:\path\to\nanopad.exe" "C:\Windows\notepad.exe" somefile.txt
-    // We need to strip the notepad.exe part.
+    // When launched via IFEO Debugger, pCmdLine contains everything after our exe:
+    //   C:\Windows\notepad.exe new.txt
+    //   "C:\Windows\notepad.exe" new.txt
+    //   C:\Windows\notepad.exe
+    // We need to find and remove the notepad.exe token (possibly with a full path).
 
     if(cmdLine.empty())
         return;
 
-    // Find "notepad.exe" (case-insensitive) in the command line
     std::wstring lower = cmdLine;
     CharLowerBuffW(lower.data(), (DWORD)lower.size());
 
+    // Look for notepad.exe or just notepad (IFEO may pass either)
+    size_t notepadPos = lower.find(L"notepad.exe");
     size_t notepadLen = wcslen(L"notepad.exe");
-    size_t pos        = lower.find(L"notepad.exe");
-    if(pos == std::wstring::npos)
+    if(notepadPos == std::wstring::npos)
+    {
+        // Try bare "notepad" — but only as a whole token, not inside another word
+        notepadPos = lower.find(L"notepad");
+        notepadLen = wcslen(L"notepad");
+        if(notepadPos != std::wstring::npos)
+        {
+            size_t afterPos = notepadPos + notepadLen;
+            // Verify it's a token boundary (space, quote, or end of string)
+            if(afterPos < lower.size() && lower[afterPos] != L' ' && lower[afterPos] != L'"' &&
+               lower[afterPos] != L'\0')
+                return; // "notepad" is part of a longer word, don't strip
+        }
+    }
+    if(notepadPos == std::wstring::npos)
         return;
 
-    size_t end = pos + notepadLen;
+    // Find the start of this token — walk back to the beginning or a space/quote boundary
+    size_t tokenStart = 0;
+    bool quoted       = false;
 
-    // If notepad.exe was quoted, skip the closing quote
-    if(end < cmdLine.size() && cmdLine[end] == L'"')
-        end++;
+    // Check if the notepad path is quoted
+    if(notepadPos > 0 && cmdLine[notepadPos - 1] != L' ' && cmdLine[notepadPos - 1] != L'"')
+    {
+        // Part of a full path like C:\Windows\notepad.exe — find the token start
+        size_t s = notepadPos;
+        while(s > 0 && cmdLine[s - 1] != L' ' && cmdLine[s - 1] != L'"')
+            s--;
+        if(s > 0 && cmdLine[s - 1] == L'"')
+        {
+            tokenStart = s - 1;
+            quoted     = true;
+        }
+        else
+        {
+            tokenStart = s;
+        }
+    }
+    else if(notepadPos > 0 && cmdLine[notepadPos - 1] == L'"')
+    {
+        // "notepad.exe" — quoted, find opening quote
+        size_t s = notepadPos - 1;
+        while(s > 0 && cmdLine[s - 1] != L'"')
+            s--;
+        // s might be 0 or pointing after the opening quote
+        if(s > 0)
+            s--;
+        tokenStart = s;
+        quoted     = true;
+    }
+    else
+    {
+        tokenStart = notepadPos;
+    }
 
-    // Skip whitespace after it
-    while(end < cmdLine.size() && cmdLine[end] == L' ')
-        end++;
+    // Find the end of the notepad.exe token
+    size_t tokenEnd = notepadPos + notepadLen;
+    if(quoted && tokenEnd < cmdLine.size() && cmdLine[tokenEnd] == L'"')
+        tokenEnd++;
 
-    // Check if there was a leading quote before notepad path
-    if(pos > 0 && cmdLine[pos - 1] == L'"')
-        pos--;
-    // Skip whitespace before the notepad token
-    while(pos > 0 && cmdLine[pos - 1] == L' ')
-        pos--;
+    // Skip whitespace after the token
+    while(tokenEnd < cmdLine.size() && cmdLine[tokenEnd] == L' ')
+        tokenEnd++;
 
-    // Replace the whole thing: keep everything after notepad.exe
-    cmdLine = cmdLine.substr(end);
+    // Keep everything after the notepad token
+    cmdLine = cmdLine.substr(tokenEnd);
 }
 
 // --- Open With registration (HKCU, no admin) ---

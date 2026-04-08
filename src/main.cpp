@@ -59,7 +59,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
     Theme::EnableDarkModeForApp();
 
-    // Load all settings from registry in a single open
+    // Load all settings from INI file
     g_settings.Load();
     if(g_settings.fontLoaded)
         g_fontManager.LoadFromSettings(g_settings.font);
@@ -537,8 +537,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 auto *nmmouse = reinterpret_cast<NMMOUSE *>(lParam);
                 if(g_statusBar.HandleClick(nmmouse->pt))
                     UpdateChecker::OpenReleasePage();
+                return 0;
             }
-            return 0;
+            break;
         }
 
         case WM_COMMAND:

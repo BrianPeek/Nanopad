@@ -196,22 +196,6 @@ void UpdateChecker::OpenReleasePage()
     ShellExecuteW(nullptr, L"open", url, nullptr, nullptr, SW_SHOWNORMAL);
 }
 
-void UpdateChecker::ShowUpdateDialog(HWND hwnd)
-{
-    wchar_t msg[512];
-    swprintf_s(msg,
-               L"A new version of Nanopad is available!\n\n"
-               L"Current version: %s\n"
-               L"New version: %s\n\n"
-               L"Update with:  winget upgrade Ganksoft.Nanopad\n\n"
-               L"Or open the download page?",
-               SN_VERSION_WSTR, s_newVersion);
-
-    int result = CenteredMessageBox(hwnd, msg, L"Update Available", MB_YESNO | MB_ICONINFORMATION);
-    if(result == IDYES)
-        OpenReleasePage();
-}
-
 void UpdateChecker::ShowAboutDialog(HWND hwnd)
 {
     wchar_t msg[512];

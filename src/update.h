@@ -11,9 +11,6 @@ class UpdateChecker
     // If a newer version is found, posts WM_APP_UPDATE_AVAILABLE to hwnd.
     static void CheckAsync(HWND hwnd);
 
-    // Call from the message handler when WM_APP_UPDATE_AVAILABLE arrives.
-    static void ShowUpdateDialog(HWND hwnd);
-
     // Show About dialog with version info and update status.
     static void ShowAboutDialog(HWND hwnd);
 

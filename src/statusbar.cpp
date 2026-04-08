@@ -147,10 +147,8 @@ bool StatusBar::HandleClick(POINT pt)
     if(!m_updateAvail || !m_hwnd)
         return false;
 
-    // Part 5 starts at the edge of part 4
-    int numParts = m_updateAvail ? NUM_BASE + 2 : NUM_BASE + 1;
     int edges[6] = {};
-    SendMessage(m_hwnd, SB_GETPARTS, numParts, (LPARAM)edges);
+    SendMessage(m_hwnd, SB_GETPARTS, NUM_BASE + 2, (LPARAM)edges);
 
     return pt.x >= edges[NUM_BASE];
 }
@@ -318,21 +316,20 @@ LRESULT CALLBACK StatusBar::SubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
         return 0;
     }
 
-    // Light mode: paint link part over standard rendering
+    // Light mode: custom-paint the link part after standard rendering
     if(msg == WM_PAINT && !sb->m_darkMode && sb->m_updateAvail)
     {
+        // Let the status bar paint all standard parts first
         LRESULT lr = DefSubclassProc(hwnd, msg, wParam, lParam);
 
-        int numParts = NUM_BASE + 2;
-        int edges[6] = {};
-        SendMessage(hwnd, SB_GETPARTS, numParts, (LPARAM)edges);
-
-        RECT rc;
-        GetClientRect(hwnd, &rc);
-        int linkLeft = edges[NUM_BASE];
-        RECT rcLink  = {linkLeft, rc.top, rc.right, rc.bottom};
+        // Now overpaint just the link part (5) with our styled text
+        RECT rcLink;
+        SendMessage(hwnd, SB_GETRECT, NUM_BASE + 1, (LPARAM)&rcLink);
 
         HDC hdc = GetDC(hwnd);
+        // Erase the part background before drawing (prevents ghost text)
+        HBRUSH hBg = (HBRUSH)(COLOR_BTNFACE + 1);
+        FillRect(hdc, &rcLink, hBg);
         sb->DrawLinkPart(hdc, rcLink);
         ReleaseDC(hwnd, hdc);
         return lr;

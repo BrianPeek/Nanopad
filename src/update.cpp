@@ -27,7 +27,7 @@ void UpdateChecker::CheckAsync(HWND hwnd)
         CloseHandle(hThread);
 }
 
-// Simple JSON value extractor — finds "key": "value" and returns the value.
+// Simple JSON value extractor -- finds "key": "value" and returns the value.
 // Handles escaped quotes. Bounded by jsonLen to prevent overreads.
 static bool ExtractJsonString(const char *json, size_t jsonLen, const char *key, wchar_t *out, int outLen)
 {

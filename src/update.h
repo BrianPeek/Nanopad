@@ -2,7 +2,7 @@
 #include <windows.h>
 #include "version.h"
 
-// Background update checker — runs on a worker thread, never blocks UI.
+// Background update checker -- runs on a worker thread, never blocks UI.
 // Silently fails on network errors, 404s, or missing releases.
 class UpdateChecker
 {

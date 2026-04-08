@@ -8,8 +8,27 @@ void Settings::ResolveIniPath()
 {
     if(m_iniPath[0])
         return;
-    GetModuleFileNameW(nullptr, m_iniPath, MAX_PATH);
-    // Replace exe name with nanopad.ini
+
+    wchar_t modulePath[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, modulePath, MAX_PATH);
+
+    // Resolve symlinks (e.g. WinGet Links dir -> actual Packages dir)
+    HANDLE hFile = CreateFileW(modulePath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+                               FILE_ATTRIBUTE_NORMAL, nullptr);
+    if(hFile != INVALID_HANDLE_VALUE)
+    {
+        DWORD len = GetFinalPathNameByHandleW(hFile, m_iniPath, MAX_PATH, FILE_NAME_NORMALIZED);
+        CloseHandle(hFile);
+
+        // GetFinalPathNameByHandle returns \\?\ prefix -- skip it
+        if(len > 4 && wcsncmp(m_iniPath, L"\\\\?\\", 4) == 0)
+            wmemmove(m_iniPath, m_iniPath + 4, len - 4 + 1);
+    }
+
+    // Fall back to module path if resolution failed
+    if(!m_iniPath[0])
+        wcscpy_s(m_iniPath, modulePath);
+
     wchar_t *lastSlash = wcsrchr(m_iniPath, L'\\');
     if(lastSlash)
         wcscpy_s(lastSlash + 1, MAX_PATH - (lastSlash + 1 - m_iniPath), L"nanopad.ini");
@@ -57,7 +76,7 @@ void Settings::ParseLine(const wchar_t *line)
     }
     else if(wcscmp(key, L"FontSize") == 0)
     {
-        // FontSize is in points — convert to lfHeight using screen DPI
+        // FontSize is in points -- convert to lfHeight using screen DPI
         int pts = ParseInt(val, 11);
         HDC hdc = GetDC(nullptr);
         int dpi = hdc ? GetDeviceCaps(hdc, LOGPIXELSY) : 96;
@@ -135,7 +154,7 @@ void Settings::Load()
         return;
 
     DWORD fileSize = GetFileSize(hFile, nullptr);
-    // Sanity check — settings file should never be large
+    // Sanity check -- settings file should never be large
     if(fileSize == 0 || fileSize > 64 * 1024)
     {
         CloseHandle(hFile);

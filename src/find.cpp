@@ -138,7 +138,7 @@ void FindReplace::DoFind(bool forward)
     if(textLen == 0)
         return;
 
-    // Single text copy — modified in-place for case-insensitive search
+    // Single text copy -- modified in-place for case-insensitive search
     std::wstring text((size_t)textLen, L'\0');
     GetWindowTextW(m_hwndEditor, text.data(), textLen + 1);
 

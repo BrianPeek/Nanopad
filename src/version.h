@@ -1,6 +1,6 @@
 #pragma once
 
-// Version — CI stamps these values from the git tag.
+// Version -- CI stamps these values from the git tag.
 // In development builds, this reads "1.0.0-dev".
 #define SN_VERSION_MAJOR 1
 #define SN_VERSION_MINOR 0

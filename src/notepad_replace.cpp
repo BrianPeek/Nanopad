@@ -137,7 +137,7 @@ bool NotepadReplace::Replace(HWND hwndOwner, Settings &settings)
         return IsReplacing();
     }
 
-    // We are elevated — do the registry work
+    // We are elevated -- do the registry work
     wchar_t exePath[MAX_PATH];
     if(!GetExePath(exePath, MAX_PATH))
         return false;
@@ -231,7 +231,7 @@ bool NotepadReplace::Restore(HWND hwndOwner, Settings &settings)
         return !IsReplacing();
     }
 
-    // We are elevated — restore registry
+    // We are elevated -- restore registry
     HKEY hKey;
     if(RegOpenKeyExW(HKEY_LOCAL_MACHINE, IFEO_KEY, 0, KEY_WRITE, &hKey) != ERROR_SUCCESS)
         return false;
@@ -282,7 +282,7 @@ void NotepadReplace::StripNotepadFromCmdLine(std::wstring &cmdLine)
     size_t notepadLen = wcslen(L"notepad.exe");
     if(notepadPos == std::wstring::npos)
     {
-        // Try bare "notepad" — but only as a whole token, not inside another word
+        // Try bare "notepad" -- but only as a whole token, not inside another word
         notepadPos = lower.find(L"notepad");
         notepadLen = wcslen(L"notepad");
         if(notepadPos != std::wstring::npos)
@@ -297,14 +297,14 @@ void NotepadReplace::StripNotepadFromCmdLine(std::wstring &cmdLine)
     if(notepadPos == std::wstring::npos)
         return;
 
-    // Find the start of this token — walk back to the beginning or a space/quote boundary
+    // Find the start of this token -- walk back to the beginning or a space/quote boundary
     size_t tokenStart = 0;
     bool quoted       = false;
 
     // Check if the notepad path is quoted
     if(notepadPos > 0 && cmdLine[notepadPos - 1] != L' ' && cmdLine[notepadPos - 1] != L'"')
     {
-        // Part of a full path like C:\Windows\notepad.exe — find the token start
+        // Part of a full path like C:\Windows\notepad.exe -- find the token start
         size_t s = notepadPos;
         while(s > 0 && cmdLine[s - 1] != L' ' && cmdLine[s - 1] != L'"')
             s--;
@@ -320,7 +320,7 @@ void NotepadReplace::StripNotepadFromCmdLine(std::wstring &cmdLine)
     }
     else if(notepadPos > 0 && cmdLine[notepadPos - 1] == L'"')
     {
-        // "notepad.exe" — quoted, find opening quote
+        // "notepad.exe" -- quoted, find opening quote
         size_t s = notepadPos - 1;
         while(s > 0 && cmdLine[s - 1] != L'"')
             s--;

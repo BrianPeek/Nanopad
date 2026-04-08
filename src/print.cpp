@@ -1,7 +1,7 @@
 #include "print.h"
 #include <commdlg.h>
 
-// Iterator-based line walking — avoids building a vector of all lines
+// Iterator-based line walking -- avoids building a vector of all lines
 static size_t CountLines(const std::wstring &text)
 {
     size_t count = 1;

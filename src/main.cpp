@@ -349,7 +349,7 @@ void SaveWindowPlacement(HWND hwnd)
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    // WM_FINDREPLACE is registered at runtime — can't be a switch case
+    // WM_FINDREPLACE is registered at runtime -- can't be a switch case
     static UINT WM_FINDREPLACE = FindReplace::GetFindMessageId();
     if(msg == WM_FINDREPLACE)
     {

@@ -350,7 +350,7 @@ bool FileIO::ReadFile(const std::wstring &path, std::wstring &outText, FileInfo 
 bool FileIO::WriteFile(const std::wstring &path, const std::wstring &text, Encoding enc, LineEnding le)
 {
     // For LF/CR targets, strip \r\n to \n or \r in-place on a single copy.
-    // For CRLF (or Mixed), pass through directly — no copy needed.
+    // For CRLF (or Mixed), pass through directly -- no copy needed.
     const std::wstring *pText = &text;
     std::wstring converted;
 
@@ -387,7 +387,7 @@ bool FileIO::WriteFile(const std::wstring &path, const std::wstring &text, Encod
 
     const std::wstring &outText = *pText;
 
-    // Convert to target encoding — compute size first, allocate once
+    // Convert to target encoding -- compute size first, allocate once
     size_t outputSize = 0;
     size_t bomSize    = 0;
 

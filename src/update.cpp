@@ -22,10 +22,6 @@ bool UpdateChecker::s_updateAvailable    = false;
 
 void UpdateChecker::CheckAsync(HWND hwnd)
 {
-    // Skip update check for dev builds (version contains "-dev")
-    if(wcsstr(SN_VERSION_WSTR, L"-dev"))
-        return;
-
     HANDLE hThread = CreateThread(nullptr, 0, CheckThread, (LPVOID)hwnd, 0, nullptr);
     if(hThread)
         CloseHandle(hThread);

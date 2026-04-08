@@ -373,7 +373,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         case UpdateChecker::WM_APP_UPDATE_AVAILABLE:
         {
-            UpdateChecker::ShowUpdateDialog(hwnd);
+            g_statusBar.SetUpdateAvailable();
             return 0;
         }
         case WM_CREATE:
@@ -386,6 +386,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             g_editor.Create(hwnd, g_hInst);
             g_statusBar.Create(hwnd, g_hInst);
+            g_statusBar.SetDpi(g_currentDpi);
             g_findReplace.Initialize(hwnd, g_editor.GetHwnd());
 
             g_editor.SetFont(g_fontManager.GetFont());
@@ -478,10 +479,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // Invalidate cached menu font so it's recreated at new DPI
             g_theme.InvalidateMenuFont(newDpi);
 
-            // Scale status bar part widths
-            int parts[] = {MulDiv(200, newDpi, 96), MulDiv(380, newDpi, 96), MulDiv(490, newDpi, 96),
-                           MulDiv(560, newDpi, 96), -1};
-            SendMessage(g_statusBar.GetHwnd(), SB_SETPARTS, 5, (LPARAM)parts);
+            g_statusBar.SetDpi(newDpi);
 
             g_currentDpi = newDpi;
 
@@ -530,6 +528,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 InvalidateRect(hwnd, nullptr, TRUE);
             }
             return 0;
+
+        case WM_NOTIFY:
+        {
+            auto *nmhdr = reinterpret_cast<NMHDR *>(lParam);
+            if(nmhdr->hwndFrom == g_statusBar.GetHwnd() && nmhdr->code == NM_CLICK)
+            {
+                auto *nmmouse = reinterpret_cast<NMMOUSE *>(lParam);
+                if(g_statusBar.HandleClick(nmmouse->pt))
+                    UpdateChecker::OpenReleasePage();
+            }
+            return 0;
+        }
 
         case WM_COMMAND:
         {

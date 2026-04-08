@@ -17,12 +17,14 @@ class UpdateChecker
     // Show About dialog with version info and update status.
     static void ShowAboutDialog(HWND hwnd);
 
+    // Open the release page in the default browser.
+    static void OpenReleasePage();
+
     static constexpr UINT WM_APP_UPDATE_AVAILABLE = WM_APP + 2;
 
   private:
     static DWORD WINAPI CheckThread(LPVOID param);
     static bool DoCheck();
-    static void OpenReleasePage();
 
     static wchar_t s_newVersion[64];
     static wchar_t s_releaseUrl[512];

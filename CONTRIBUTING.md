@@ -21,6 +21,7 @@ This project uses `.clang-format` for consistent formatting. Please format your 
 - Keep PRs focused — one feature or fix per PR
 - Ensure a clean Release build with no warnings
 - Update `README.md` if your change adds or modifies features
+- Update `CHANGELOG.md` for user-facing changes by adding entries under `Unreleased`
 - Test dark mode, light mode, and theme switching
 - Test with both small and large files
 

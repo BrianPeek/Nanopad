@@ -55,6 +55,7 @@ jobs:
         New-Item -ItemType Directory -Path $distDir | Out-Null
         Copy-Item "bin\Release\nanopad.exe" $distDir\
         Copy-Item "README.md" $distDir\
+        Copy-Item "CHANGELOG.md" $distDir\
         Copy-Item "LICENSE" $distDir\
 
         # Generate SHA256 checksums

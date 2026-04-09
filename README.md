@@ -9,6 +9,8 @@ A simple, portable Win32 text editor in the spirit of classic Windows Notepad.
 
 *Developed with the assistance of AI tooling.*
 
+See [CHANGELOG.md](CHANGELOG.md) for release-to-release user-facing changes.
+
 Read more about my experiences with AI and this project on [my blog](https://brianpeek.com/ai-types-faster-than-i-do/).
 
 ![Dark mode](media/dark.png)
@@ -24,6 +26,7 @@ Read more about my experiences with AI and this project on [my blog](https://bri
 - **Status bar** — Line/column, character count, encoding, line endings
 - **Word wrap** — Toggle via Format menu
 - **Drag & drop** — Drop files onto the window to open
+- **External file reload** — Reloads when the open file changes on disk; prompts first if you have unsaved edits
 - **Go To Line** — Ctrl+G
 - **Large file support** — Memory-mapped I/O for files >1MB
 - **Per-monitor DPI** — Font, menu bar, and status bar scale when dragging between monitors
@@ -51,7 +54,7 @@ Output: `bin\Release\nanopad.exe`
 ### CI/CD
 
 - **Push/PR to master** — Builds Debug + Release automatically via GitHub Actions
-- **Tag a release** — `git tag v1.0.0 && git push --tags` triggers a release build that creates a GitHub Release with a zip containing the exe, README, and SHA256 checksum
+- **Tag a release** — `git tag v1.0.0 && git push --tags` triggers a release build that creates a GitHub Release with a zip containing the exe, README, CHANGELOG, and SHA256 checksum
 - Version is stamped automatically from the git tag into `version.h` — no manual version bumps needed
 
 ## System Requirements

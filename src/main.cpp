@@ -36,13 +36,30 @@ static constexpr const wchar_t *WINDOW_CLASS = L"NanopadMainWindow";
 
 static constexpr UINT_PTR TIMER_STATUSBAR = 1;
 static constexpr UINT TIMER_STATUSBAR_MS  = 100;
+static constexpr UINT_PTR TIMER_FILEWATCH = 2;
+static constexpr UINT TIMER_FILEWATCH_MS  = 250;
 static constexpr UINT WM_DEFERRED_THEME   = WM_APP + 1;
 static int g_currentDpi                   = 96;
+static HANDLE g_hFileWatch                = INVALID_HANDLE_VALUE;
+
+struct FileStamp
+{
+    bool exists        = false;
+    FILETIME lastWrite = {};
+    ULONGLONG fileSize = 0;
+};
+
+static FileStamp g_loadedFileStamp;
+static FileStamp g_lastObservedFileStamp;
 
 // Forward declarations
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static void UpdateTitle();
 static void UpdateStatusBar();
+static void StopWatchingCurrentFile();
+static void StartWatchingCurrentFile();
+static bool LoadFileIntoEditor(const std::wstring &path, const wchar_t *failureMessage);
+static void HandleWatchedFileChange();
 static bool PromptSave();
 static void DoNew();
 static void DoOpen(const std::wstring &path = L"");
@@ -211,6 +228,137 @@ void UpdateStatusBar()
     g_statusBar.Update(line, col, charCount, lineCount, g_fileInfo.encoding, g_fileInfo.lineEnding);
 }
 
+static bool AreFileStampsEqual(const FileStamp &lhs, const FileStamp &rhs)
+{
+    if(lhs.exists != rhs.exists)
+        return false;
+    if(!lhs.exists)
+        return true;
+    return CompareFileTime(&lhs.lastWrite, &rhs.lastWrite) == 0 && lhs.fileSize == rhs.fileSize;
+}
+
+static bool QueryFileStamp(const std::wstring &path, FileStamp &outStamp)
+{
+    outStamp = {};
+    if(path.empty())
+        return false;
+
+    WIN32_FILE_ATTRIBUTE_DATA attribs;
+    if(!GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &attribs))
+        return false;
+
+    ULARGE_INTEGER size;
+    size.LowPart  = attribs.nFileSizeLow;
+    size.HighPart = attribs.nFileSizeHigh;
+
+    outStamp.exists    = true;
+    outStamp.lastWrite = attribs.ftLastWriteTime;
+    outStamp.fileSize  = size.QuadPart;
+    return true;
+}
+
+static std::wstring GetDirectoryPath(const std::wstring &path)
+{
+    size_t pos = path.find_last_of(L"\\/");
+    if(pos == std::wstring::npos)
+        return L".";
+    if(pos == 0)
+        return path.substr(0, 1);
+    if(pos == 2 && path[1] == L':')
+        return path.substr(0, 3);
+    return path.substr(0, pos);
+}
+
+static void StopWatchingCurrentFile()
+{
+    if(g_hFileWatch != INVALID_HANDLE_VALUE)
+    {
+        FindCloseChangeNotification(g_hFileWatch);
+        g_hFileWatch = INVALID_HANDLE_VALUE;
+    }
+
+    g_loadedFileStamp       = {};
+    g_lastObservedFileStamp = {};
+}
+
+static void StartWatchingCurrentFile()
+{
+    StopWatchingCurrentFile();
+
+    if(g_fileInfo.filePath.empty())
+        return;
+
+    QueryFileStamp(g_fileInfo.filePath, g_loadedFileStamp);
+    g_lastObservedFileStamp = g_loadedFileStamp;
+
+    std::wstring directoryPath = GetDirectoryPath(g_fileInfo.filePath);
+    g_hFileWatch               = FindFirstChangeNotificationW(directoryPath.c_str(), FALSE,
+                                                              FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE |
+                                                                  FILE_NOTIFY_CHANGE_SIZE);
+    if(g_hFileWatch == INVALID_HANDLE_VALUE)
+    {
+        g_loadedFileStamp       = {};
+        g_lastObservedFileStamp = {};
+    }
+}
+
+static bool LoadFileIntoEditor(const std::wstring &path, const wchar_t *failureMessage)
+{
+    std::wstring text;
+    FileInfo info;
+    if(!FileIO::ReadFile(path, text, info))
+    {
+        if(failureMessage)
+            CenteredMessageBox(g_hwndMain, failureMessage, APP_NAME, MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    g_fileInfo = info;
+    g_editor.SetText(text.c_str());
+    g_editor.SetDirty(false);
+    UpdateTitle();
+    UpdateStatusBar();
+    StartWatchingCurrentFile();
+    return true;
+}
+
+static void HandleWatchedFileChange()
+{
+    if(g_hFileWatch == INVALID_HANDLE_VALUE || g_fileInfo.filePath.empty())
+        return;
+
+    if(WaitForSingleObject(g_hFileWatch, 0) != WAIT_OBJECT_0)
+        return;
+
+    FileStamp currentStamp;
+    QueryFileStamp(g_fileInfo.filePath, currentStamp);
+
+    if(!FindNextChangeNotification(g_hFileWatch))
+    {
+        StartWatchingCurrentFile();
+        return;
+    }
+
+    if(AreFileStampsEqual(currentStamp, g_lastObservedFileStamp))
+        return;
+
+    g_lastObservedFileStamp = currentStamp;
+    if(!currentStamp.exists)
+        return;
+
+    if(g_editor.IsDirty())
+    {
+        int result = CenteredMessageBox(g_hwndMain,
+                                        L"This file was modified outside Nanopad.\n\n"
+                                        L"Reload it and discard your unsaved changes?",
+                                        APP_NAME, MB_YESNO | MB_ICONQUESTION);
+        if(result != IDYES)
+            return;
+    }
+
+    LoadFileIntoEditor(g_fileInfo.filePath, L"Failed to reload the file after it changed on disk.");
+}
+
 bool PromptSave()
 {
     if(!g_editor.IsDirty())
@@ -240,6 +388,7 @@ void DoNew()
 {
     if(!PromptSave())
         return;
+    StopWatchingCurrentFile();
     g_editor.SetText(L"");
     g_editor.SetDirty(false);
     g_fileInfo            = {};
@@ -285,22 +434,11 @@ void DoOpen(const std::wstring &path)
         g_fileInfo.lineEnding = LineEnding::CRLF;
         UpdateTitle();
         UpdateStatusBar();
+        StartWatchingCurrentFile();
         return;
     }
 
-    std::wstring text;
-    FileInfo info;
-    if(!FileIO::ReadFile(filePath, text, info))
-    {
-        CenteredMessageBox(g_hwndMain, L"Failed to open file.", APP_NAME, MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    g_fileInfo = info;
-    g_editor.SetText(text.c_str());
-    g_editor.SetDirty(false);
-    UpdateTitle();
-    UpdateStatusBar();
+    LoadFileIntoEditor(filePath, L"Failed to open file.");
 }
 
 void DoSave()
@@ -320,6 +458,7 @@ void DoSave()
 
     g_editor.SetDirty(false);
     UpdateTitle();
+    StartWatchingCurrentFile();
 }
 
 void DoSaveAs()
@@ -339,6 +478,7 @@ void DoSaveAs()
     g_editor.SetDirty(false);
     UpdateTitle();
     UpdateStatusBar();
+    StartWatchingCurrentFile();
 }
 
 void SaveWindowPlacement(HWND hwnd)
@@ -400,6 +540,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             g_fileInfo.lineEnding = LineEnding::CRLF;
 
             SetTimer(hwnd, TIMER_STATUSBAR, TIMER_STATUSBAR_MS, nullptr);
+            SetTimer(hwnd, TIMER_FILEWATCH, TIMER_FILEWATCH_MS, nullptr);
             UpdateTitle();
 
             // Defer menu checks and status bar styling
@@ -452,7 +593,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_TIMER:
             if(wParam == TIMER_STATUSBAR)
+            {
                 UpdateStatusBar();
+            }
+            else if(wParam == TIMER_FILEWATCH)
+            {
+                HandleWatchedFileChange();
+            }
             return 0;
 
         case WM_ERASEBKGND:
@@ -759,6 +906,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_DESTROY:
             KillTimer(hwnd, TIMER_STATUSBAR);
+            KillTimer(hwnd, TIMER_FILEWATCH);
+            StopWatchingCurrentFile();
             PostQuitMessage(0);
             return 0;
     }

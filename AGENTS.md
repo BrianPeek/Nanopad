@@ -26,6 +26,7 @@ Nanopad is a portable Win32 text editor written in C++ using the Win32 API direc
 - All `LoadLibrary` calls must use full system paths to prevent DLL hijacking.
 - All fixed-size buffers must have explicit bounds checks before writes.
 - Keep the README updated when adding or changing features.
+- Keep `CHANGELOG.md` updated for user-facing changes. Add new entries under `Unreleased`, and only move them into a versioned section when cutting a release.
 
 ## Testing
 - No automated test suite — verify manually after changes.

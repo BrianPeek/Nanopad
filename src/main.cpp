@@ -141,13 +141,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
     if(pCmdLine && pCmdLine[0])
     {
         std::wstring path = pCmdLine;
-        if(path.size() >= 2 && path.front() == L'"' && path.back() == L'"')
-            path = path.substr(1, path.size() - 2);
 
         // If launched via IFEO, strip the "notepad.exe" from the front
         NotepadReplace::StripNotepadFromCmdLine(path);
 
-        // Strip quotes from the remaining path
+        // Trim whitespace
+        while(!path.empty() && (path.front() == L' ' || path.front() == L'\t'))
+            path.erase(path.begin());
+        while(!path.empty() && (path.back() == L' ' || path.back() == L'\t'))
+            path.pop_back();
+
+        // Strip surrounding quotes
         if(path.size() >= 2 && path.front() == L'"' && path.back() == L'"')
             path = path.substr(1, path.size() - 2);
 

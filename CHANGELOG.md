@@ -4,6 +4,11 @@ All notable user-facing changes to Nanopad will be documented in this file.
 
 This project follows a simple changelog format inspired by Keep a Changelog.
 
+## [1.0.8] - 2026-04-14
+
+### Fixed
+- Fixed command-line parsing for paths with leading whitespace (e.g. .reg file "Edit" context menu).
+
 ## [1.0.7] - 2026-04-08
 
 ### Added

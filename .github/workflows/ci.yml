@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         configuration: [Debug, Release]
+        platform: [x64, ARM64]
 
     steps:
     - uses: actions/checkout@v4
@@ -20,11 +21,12 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Build
-      run: msbuild Nanopad.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /nologo /v:minimal
+      run: msbuild Nanopad.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /nologo /v:minimal
 
     - name: Verify output
       if: matrix.configuration == 'Release'
       run: |
-        if (!(Test-Path "bin\Release\nanopad.exe")) { throw "Build output not found" }
-        $size = (Get-Item "bin\Release\nanopad.exe").Length
-        Write-Host "nanopad.exe: $size bytes"
+        $outDir = "bin\Release-${{ matrix.platform }}"
+        if (!(Test-Path "$outDir\nanopad.exe")) { throw "Build output not found" }
+        $size = (Get-Item "$outDir\nanopad.exe").Length
+        Write-Host "nanopad.exe (${{ matrix.platform }}): $size bytes"

@@ -30,7 +30,6 @@ jobs:
         $parts = $version.Split('.')
         $major = $parts[0]; $minor = if ($parts.Length -gt 1) { $parts[1] } else { "0" }; $patch = if ($parts.Length -gt 2) { $parts[2] } else { "0" }
 
-        # Stamp version.h — the single source of truth
         $file = "src\version.h"
         $content = Get-Content $file -Raw
         $content = $content -replace 'SN_VERSION_MAJOR\s+\d+', "SN_VERSION_MAJOR  $major"
@@ -45,43 +44,66 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
 
-    - name: Build Release
+    - name: Build Release x64
       run: msbuild Nanopad.sln /p:Configuration=Release /p:Platform=x64 /nologo /v:minimal
 
+    - name: Build Release ARM64
+      run: msbuild Nanopad.sln /p:Configuration=Release /p:Platform=ARM64 /nologo /v:minimal
+
     - name: Create distribution
+      id: dist
       shell: pwsh
       run: |
-        $distDir = "Nanopad-${{ steps.version.outputs.VERSION }}"
-        New-Item -ItemType Directory -Path $distDir | Out-Null
-        Copy-Item "bin\Release\nanopad.exe" $distDir\
-        Copy-Item "README.md" $distDir\
-        Copy-Item "CHANGELOG.md" $distDir\
-        Copy-Item "LICENSE" $distDir\
+        $ver = "${{ steps.version.outputs.VERSION }}"
 
-        # Generate SHA256 checksums
-        $exeHash = (Get-FileHash "$distDir\nanopad.exe" -Algorithm SHA256).Hash
-        "$exeHash  nanopad.exe" | Out-File -Encoding ASCII "$distDir\SHA256SUMS.txt"
+        # x64 zip
+        $x64Dir = "Nanopad-$ver-x64"
+        New-Item -ItemType Directory -Path $x64Dir | Out-Null
+        Copy-Item "bin\Release-x64\nanopad.exe" $x64Dir\
+        Copy-Item "README.md" $x64Dir\
+        Copy-Item "CHANGELOG.md" $x64Dir\
+        Copy-Item "LICENSE" $x64Dir\
+        $x64ExeHash = (Get-FileHash "$x64Dir\nanopad.exe" -Algorithm SHA256).Hash
+        "$x64ExeHash  nanopad.exe" | Out-File -Encoding ASCII "$x64Dir\SHA256SUMS.txt"
+        Compress-Archive -Path "$x64Dir\*" -DestinationPath "$x64Dir.zip"
+        $x64ZipHash = (Get-FileHash "$x64Dir.zip" -Algorithm SHA256).Hash
 
-        # Create zip
-        Compress-Archive -Path "$distDir\*" -DestinationPath "$distDir.zip"
-        $zipHash = (Get-FileHash "$distDir.zip" -Algorithm SHA256).Hash
+        # ARM64 zip
+        $armDir = "Nanopad-$ver-arm64"
+        New-Item -ItemType Directory -Path $armDir | Out-Null
+        Copy-Item "bin\Release-ARM64\nanopad.exe" $armDir\
+        Copy-Item "README.md" $armDir\
+        Copy-Item "CHANGELOG.md" $armDir\
+        Copy-Item "LICENSE" $armDir\
+        $armExeHash = (Get-FileHash "$armDir\nanopad.exe" -Algorithm SHA256).Hash
+        "$armExeHash  nanopad.exe" | Out-File -Encoding ASCII "$armDir\SHA256SUMS.txt"
+        Compress-Archive -Path "$armDir\*" -DestinationPath "$armDir.zip"
+        $armZipHash = (Get-FileHash "$armDir.zip" -Algorithm SHA256).Hash
 
-        # Output for next steps
-        echo "DIST_ZIP=$distDir.zip" >> $env:GITHUB_OUTPUT
-        echo "EXE_HASH=$exeHash" >> $env:GITHUB_OUTPUT
-        echo "ZIP_HASH=$zipHash" >> $env:GITHUB_OUTPUT
-      id: dist
+        echo "X64_ZIP=$x64Dir.zip" >> $env:GITHUB_OUTPUT
+        echo "ARM64_ZIP=$armDir.zip" >> $env:GITHUB_OUTPUT
+        echo "X64_EXE_HASH=$x64ExeHash" >> $env:GITHUB_OUTPUT
+        echo "X64_ZIP_HASH=$x64ZipHash" >> $env:GITHUB_OUTPUT
+        echo "ARM64_EXE_HASH=$armExeHash" >> $env:GITHUB_OUTPUT
+        echo "ARM64_ZIP_HASH=$armZipHash" >> $env:GITHUB_OUTPUT
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: ${{ steps.dist.outputs.DIST_ZIP }}
+        files: |
+          ${{ steps.dist.outputs.X64_ZIP }}
+          ${{ steps.dist.outputs.ARM64_ZIP }}
         generate_release_notes: true
         body: |
           ## Nanopad ${{ steps.version.outputs.VERSION }}
 
           ### Download
           Extract the zip and run `nanopad.exe`. Settings are stored in `nanopad.ini` next to the executable.
+
+          | Platform | Download |
+          |----------|----------|
+          | x64 | `Nanopad-${{ steps.version.outputs.VERSION }}-x64.zip` |
+          | ARM64 | `Nanopad-${{ steps.version.outputs.VERSION }}-arm64.zip` |
 
           ### Install via winget
           ```
@@ -90,8 +112,10 @@ jobs:
 
           ### SHA256
           ```
-          ${{ steps.dist.outputs.EXE_HASH }}  nanopad.exe
-          ${{ steps.dist.outputs.ZIP_HASH }}  Nanopad-${{ steps.version.outputs.VERSION }}.zip
+          ${{ steps.dist.outputs.X64_EXE_HASH }}  nanopad.exe (x64)
+          ${{ steps.dist.outputs.X64_ZIP_HASH }}  Nanopad-${{ steps.version.outputs.VERSION }}-x64.zip
+          ${{ steps.dist.outputs.ARM64_EXE_HASH }}  nanopad.exe (arm64)
+          ${{ steps.dist.outputs.ARM64_ZIP_HASH }}  Nanopad-${{ steps.version.outputs.VERSION }}-arm64.zip
           ```
 
     - name: Publish to winget

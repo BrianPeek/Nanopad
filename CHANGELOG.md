@@ -4,6 +4,13 @@ All notable user-facing changes to Nanopad will be documented in this file.
 
 This project follows a simple changelog format inspired by Keep a Changelog.
 
+## [1.0.9] - 2026-04-17
+
+### Added
+- Native ARM64 build alongside x64.
+- Release now ships both x64 and ARM64 zips.
+- CI builds and verifies both platforms.
+
 ## [1.0.8] - 2026-04-14
 
 ### Fixed

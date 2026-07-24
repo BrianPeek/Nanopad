@@ -4,6 +4,11 @@ All notable user-facing changes to Nanopad will be documented in this file.
 
 This project follows a simple changelog format inspired by Keep a Changelog.
 
+## [1.2.2] - 2026-07-24
+
+### Fixed
+- When a Find or Replace reports that the text cannot be found (or a Replace All completes), dismissing the message box now returns focus to the Find/Replace dialog instead of the main edit window.
+
 ## [1.2.1] - 2026-07-07
 
 ### Fixed

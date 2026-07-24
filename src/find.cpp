@@ -183,7 +183,10 @@ void FindReplace::DoFind(bool forward)
     }
     else
     {
-        CenteredMessageBox(m_hwndParent, L"Cannot find the specified text.", L"Nanopad", MB_OK | MB_ICONINFORMATION);
+        // Own the message box to the Find dialog when it is open so focus
+        // returns to the dialog on dismiss instead of the main edit window.
+        HWND owner = m_hwndDialog ? m_hwndDialog : m_hwndParent;
+        CenteredMessageBox(owner, L"Cannot find the specified text.", L"Nanopad", MB_OK | MB_ICONINFORMATION);
     }
 }
 
@@ -278,16 +281,19 @@ void FindReplace::DoReplaceAll()
         count++;
     }
 
+    // Own the message box to the Replace dialog when it is open so focus
+    // returns to the dialog on dismiss instead of the main edit window.
+    HWND owner = m_hwndDialog ? m_hwndDialog : m_hwndParent;
     if(count > 0)
     {
         SetWindowTextW(m_hwndEditor, result.c_str());
 
         wchar_t msg[64];
         swprintf_s(msg, L"Replaced %d occurrence(s).", count);
-        CenteredMessageBox(m_hwndParent, msg, L"Nanopad", MB_OK | MB_ICONINFORMATION);
+        CenteredMessageBox(owner, msg, L"Nanopad", MB_OK | MB_ICONINFORMATION);
     }
     else
     {
-        CenteredMessageBox(m_hwndParent, L"Cannot find the specified text.", L"Nanopad", MB_OK | MB_ICONINFORMATION);
+        CenteredMessageBox(owner, L"Cannot find the specified text.", L"Nanopad", MB_OK | MB_ICONINFORMATION);
     }
 }

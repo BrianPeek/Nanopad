@@ -2,6 +2,7 @@
 #include "pathutil.h"
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
@@ -246,7 +247,8 @@ bool Recovery::LoadFile(const wchar_t *path, std::wstring &outText, FileInfo &ou
         return false;
 
     size_t wcount = (read - 2) / sizeof(wchar_t);
-    std::wstring content(reinterpret_cast<const wchar_t *>(raw.get() + 2), wcount);
+    std::wstring content(wcount, L'\0');
+    memcpy(content.data(), raw.get() + 2, wcount * sizeof(wchar_t));
 
     if(content.compare(0, wcslen(MAGIC), MAGIC) != 0)
         return false;

@@ -1,6 +1,7 @@
 #include "editor.h"
 #include "resource.h"
 #include <commctrl.h>
+#include <windowsx.h>
 
 Editor::Editor()  = default;
 Editor::~Editor() = default;
@@ -30,22 +31,100 @@ bool Editor::Create(HWND parent, HINSTANCE hInst)
     return true;
 }
 
-// Intercept Ctrl+mouse wheel for zoom; let the standard control handle the rest.
+// Intercept Ctrl+mouse wheel for zoom and triple-click for line selection;
+// let the standard control handle the rest.
 LRESULT CALLBACK Editor::EditSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR,
                                           DWORD_PTR dwRefData)
 {
-    if(msg == WM_MOUSEWHEEL && (GET_KEYSTATE_WPARAM(wParam) & MK_CONTROL))
+    Editor *self = (Editor *)dwRefData;
+
+    switch(msg)
     {
-        Editor *self = (Editor *)dwRefData;
-        int delta    = GET_WHEEL_DELTA_WPARAM(wParam);
-        PostMessage(self->m_hwndParent, WM_APP_ZOOM, (WPARAM)delta, 0);
-        return 0;
+        case WM_MOUSEWHEEL:
+            if(GET_KEYSTATE_WPARAM(wParam) & MK_CONTROL)
+            {
+                int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+                PostMessage(self->m_hwndParent, WM_APP_ZOOM, (WPARAM)delta, 0);
+                return 0;
+            }
+            break;
+
+        case WM_LBUTTONDBLCLK:
+            self->m_dblClickPending = true;
+            self->m_dblClickTime    = GetMessageTime();
+            self->m_dblClickPt      = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+            break;
+
+        case WM_LBUTTONDOWN:
+            if(self->IsTripleClick(lParam))
+            {
+                self->m_dblClickPending = false;
+                self->SelectCaretLine();
+                return 0;
+            }
+            self->m_dblClickPending = false;
+            break;
+
+        case WM_NCDESTROY:
+            RemoveWindowSubclass(hwnd, EditSubclassProc, 0);
+            break;
     }
 
-    if(msg == WM_NCDESTROY)
-        RemoveWindowSubclass(hwnd, EditSubclassProc, 0);
-
     return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+bool Editor::IsTripleClick(LPARAM lParam) const
+{
+    if(!m_dblClickPending)
+        return false;
+
+    if((LONG)(GetMessageTime() - m_dblClickTime) > (LONG)GetDoubleClickTime())
+        return false;
+
+    POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+    return abs(pt.x - m_dblClickPt.x) <= GetSystemMetrics(SM_CXDOUBLECLK) / 2 &&
+           abs(pt.y - m_dblClickPt.y) <= GetSystemMetrics(SM_CYDOUBLECLK) / 2;
+}
+
+// Selects the whole line holding the caret, including its line break.
+// EM_LINEINDEX and friends count wrapped display lines, so display lines whose
+// character ranges are contiguous (no line break between them) are merged back
+// into the logical line they came from.
+void Editor::SelectCaretLine()
+{
+    if(!m_hwndEdit)
+        return;
+
+    auto lineIndex  = [this](int line) { return (int)SendMessage(m_hwndEdit, EM_LINEINDEX, line, 0); };
+    auto lineLength = [this](int charIndex) { return (int)SendMessage(m_hwndEdit, EM_LINELENGTH, charIndex, 0); };
+
+    DWORD selStart = 0;
+    SendMessage(m_hwndEdit, EM_GETSEL, (WPARAM)&selStart, 0);
+
+    int first = (int)SendMessage(m_hwndEdit, EM_LINEFROMCHAR, selStart, 0);
+    int last  = first;
+
+    while(first > 0)
+    {
+        int prevStart = lineIndex(first - 1);
+        if(prevStart + lineLength(prevStart) != lineIndex(first))
+            break;
+        first--;
+    }
+
+    int lineCount = (int)SendMessage(m_hwndEdit, EM_GETLINECOUNT, 0, 0);
+    while(last + 1 < lineCount)
+    {
+        int start = lineIndex(last);
+        if(start + lineLength(start) != lineIndex(last + 1))
+            break;
+        last++;
+    }
+
+    int selBegin = lineIndex(first);
+    int selEnd   = (last + 1 < lineCount) ? lineIndex(last + 1) : lineIndex(last) + lineLength(lineIndex(last));
+
+    SendMessage(m_hwndEdit, EM_SETSEL, selBegin, selEnd);
 }
 
 void Editor::Resize(int x, int y, int cx, int cy)

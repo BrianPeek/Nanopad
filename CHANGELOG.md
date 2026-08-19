@@ -4,6 +4,12 @@ All notable user-facing changes to Nanopad will be documented in this file.
 
 This project follows a simple changelog format inspired by Keep a Changelog.
 
+## [1.3.0] - 2026-08-18
+
+### Added
+- Triple-click in the text area selects the whole line, including its line break.
+- Alt+Z toggles word wrap.
+
 ## [1.2.2] - 2026-07-24
 
 ### Fixed

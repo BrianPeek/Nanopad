@@ -63,6 +63,8 @@ class Editor
 
   private:
     void RecreateControl();
+    bool IsTripleClick(LPARAM lParam) const;
+    void SelectCaretLine();
 
     static LRESULT CALLBACK EditSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass,
                                              DWORD_PTR dwRefData);
@@ -75,4 +77,11 @@ class Editor
     bool m_wordWrap       = false;
     bool m_suppressNotify = false;
     RECT m_rect           = {};
+
+    // Triple-click tracking: the EDIT control handles double-click itself, so a
+    // third click is detected as a WM_LBUTTONDOWN close in time and position to
+    // the preceding WM_LBUTTONDBLCLK.
+    bool m_dblClickPending = false;
+    LONG m_dblClickTime    = 0;
+    POINT m_dblClickPt     = {};
 };

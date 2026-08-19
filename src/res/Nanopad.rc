@@ -71,7 +71,7 @@ BEGIN
     END
     POPUP "F&ormat"
     BEGIN
-        MENUITEM "&Word Wrap",                  IDM_FORMAT_WORDWRAP
+        MENUITEM "&Word Wrap\tAlt+Z",            IDM_FORMAT_WORDWRAP
         MENUITEM "&Font...",                    IDM_FORMAT_FONT
     END
     POPUP "&View"
@@ -118,6 +118,7 @@ BEGIN
     "H",    IDM_EDIT_REPLACE,   VIRTKEY, CONTROL
     "G",    IDM_EDIT_GOTO,      VIRTKEY, CONTROL
     "W",    IDM_FILE_EXIT,      VIRTKEY, CONTROL, SHIFT
+    "Z",    IDM_FORMAT_WORDWRAP, VIRTKEY, ALT
     VK_OEM_PLUS,  IDM_VIEW_ZOOMIN,    VIRTKEY, CONTROL
     VK_ADD,       IDM_VIEW_ZOOMIN,    VIRTKEY, CONTROL
     VK_OEM_MINUS, IDM_VIEW_ZOOMOUT,   VIRTKEY, CONTROL

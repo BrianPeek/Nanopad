@@ -23,9 +23,10 @@ Read more about my experiences with AI and this project on [my blog](https://bri
 - **Font selection** — ChooseFont dialog, DPI-aware, persisted across sessions (default: Consolas 11pt)
 - **Zoom** — Ctrl+mouse wheel, View menu (Zoom In/Out, Restore Default Zoom), or Ctrl+Plus / Ctrl+Minus / Ctrl+0
 - **Find & Replace** — Find Next/Previous, Match Case, Replace All
+- **Triple-click** — Selects the whole line under the cursor
 - **Print** — With headers, footers, and page numbers
 - **Status bar** — Line/column, character count, encoding, line endings
-- **Word wrap** — Toggle via Format menu
+- **Word wrap** — Toggle via Format menu or Alt+Z
 - **Drag & drop** — Drop files onto the window to open
 - **External file reload** — Reloads when the open file changes on disk; prompts first if you have unsaved edits
 - **Crash & shutdown recovery** — Autosaves unsaved text and offers to restore it after a crash, power loss, or a Windows Update restart; registers for automatic restart so Windows relaunches Nanopad after an update reboot
@@ -83,6 +84,7 @@ Output: `bin\Release\nanopad.exe`
 | Ctrl+G | Go To Line |
 | Ctrl+Plus / Ctrl+Minus | Zoom In / Out |
 | Ctrl+0 | Restore Default Zoom |
+| Alt+Z | Toggle Word Wrap |
 | Ctrl+Shift+W | Close Window |
 
 ## Settings

@@ -87,6 +87,27 @@ jobs:
         echo "ARM64_EXE_HASH=$armExeHash" >> $env:GITHUB_OUTPUT
         echo "ARM64_ZIP_HASH=$armZipHash" >> $env:GITHUB_OUTPUT
 
+    - name: Extract changelog section
+      id: notes
+      shell: pwsh
+      run: |
+        # Lift this version's section out of CHANGELOG.md so the release page
+        # shows what changed. Its "### Added"/"### Fixed" headings sit directly
+        # under the "## Nanopad <ver>" heading in the release body below.
+        $ver     = "${{ steps.version.outputs.VERSION }}"
+        $section = @()
+        $inside  = $false
+        foreach ($line in (Get-Content CHANGELOG.md)) {
+          if ($line -match "^##\s+\[$([regex]::Escape($ver))\]") { $inside = $true }
+          elseif ($inside -and $line -match '^##\s') { break }
+          elseif ($inside) { $section += $line }
+        }
+        $changes = ($section -join "`n").Trim()
+        if (-not $changes) { Write-Warning "No CHANGELOG.md section found for $ver" }
+
+        $delim = "CHANGES_EOF_$([guid]::NewGuid().ToString('N'))"
+        "CHANGES<<$delim`n$changes`n$delim" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v3
       with:
@@ -96,6 +117,8 @@ jobs:
         generate_release_notes: true
         body: |
           ## Nanopad ${{ steps.version.outputs.VERSION }}
+
+          ${{ steps.notes.outputs.CHANGES }}
 
           ### Download
           Extract the zip and run `nanopad.exe`. Settings are stored in `nanopad.ini` next to the executable.
@@ -127,12 +150,16 @@ jobs:
         # stale fork makes the PR step fail with "Ref cannot be created". Fast-
         # forward the fork to microsoft/winget-pkgs first via the same API the
         # "Sync fork" button uses. Best-effort: warn but don't block the release.
-        try {
-          $result = gh api --method POST repos/BrianPeek/winget-pkgs/merge-upstream -f branch=master 2>&1
+        # gh reports failure through its exit code rather than a PowerShell
+        # exception, so clear it explicitly or this step fails the job and the
+        # publish below never runs.
+        $result = gh api --method POST repos/BrianPeek/winget-pkgs/merge-upstream -f branch=master 2>&1
+        if ($LASTEXITCODE -ne 0) {
+          Write-Warning "Fork sync failed (continuing): $result"
+        } else {
           Write-Host "Fork synced: $result"
-        } catch {
-          Write-Warning "Fork sync failed (continuing): $_"
         }
+        $global:LASTEXITCODE = 0
 
     - name: Publish to winget
       uses: vedantmgoyal9/winget-releaser@v2
